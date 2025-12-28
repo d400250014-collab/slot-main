@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Slot Edukasi</title>
+<style>
+body{
+  background:#111;
+  color:#0f0;
+  font-family:Consolas;
+  text-align:center;
+}
+.machine{
+  background:#222;
+  width:360px;
+  margin:auto;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 0 20px #0f0;
+}
+.reels span{
+  display:inline-block;
+  width:90px;
+  font-size:50px;
+  border:2px solid #0f0;
+  padding:10px;
+  margin:5px;
+  background:black;
+}
+button{
+  background:red;
+  color:white;
+  font-size:20px;
+  padding:10px 30px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+.stat{
+  text-align:left;
+  margin-top:10px;
+  color:white;
+}
+.warning{
+  color:yellow;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎰 SLOT EDUKASI</h2>
+<p class="warning">Simulator edukasi – bukan judi uang asli</p>
+
+<div class="machine">
+  <div class="reels">
+    <span id="r1">🍒</span>
+    <span id="r2">🍋</span>
+    <span id="r3">🍇</span>
+  </div>
+
+  <h3>Saldo: <span id="saldo">1000</span></h3>
+  <button onclick="spin()">SPIN</button>
+  <p id="hasil"></p>
+
+  <div class="stat">
+    Total Spin: <span id="tspin">0</span><br>
+    Menang: <span id="win">0</span><br>
+    Kalah: <span id="lose">0</span><br>
+    Net Rugi/Untung: <span id="net">0</span>
+  </div>
+</div>
+
+<script>
+let saldo=1000, tspin=0, win=0, lose=0, net=0;
+const icon=["🍒","🍋","🍇","⭐","7️⃣"];
+
+function spin(){
+  if(saldo<100){alert("Saldo habis");return;}
+  tspin++; saldo-=100; net-=100;
+
+  let a=icon[Math.floor(Math.random()*icon.length)];
+  let b=icon[Math.floor(Math.random()*icon.length)];
+  let c=icon[Math.floor(Math.random()*icon.length)];
+
+  r1.innerHTML=a; r2.innerHTML=b; r3.innerHTML=c;
+
+  if(a==b && b==c){
+    win++; saldo+=500; net+=500;
+    hasil.innerHTML="MENANG!";
+  }else{
+    lose++; hasil.innerHTML="KALAH";
+  }
+
+  saldo.innerHTML=saldo;
+  tspin.innerHTML=tspin;
+  win.innerHTML=win;
+  lose.innerHTML=lose;
+  net.innerHTML=net;
+}
+</script>
+</body>
+</html>
