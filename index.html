@@ -4,100 +4,77 @@
 <meta charset="UTF-8">
 <title>Slot Edukasi</title>
 <style>
-body{
-  background:#111;
-  color:#0f0;
-  font-family:Consolas;
-  text-align:center;
-}
-.machine{
-  background:#222;
-  width:360px;
-  margin:auto;
-  padding:20px;
-  border-radius:15px;
-  box-shadow:0 0 20px #0f0;
-}
-.reels span{
-  display:inline-block;
-  width:90px;
-  font-size:50px;
-  border:2px solid #0f0;
-  padding:10px;
-  margin:5px;
-  background:black;
-}
-button{
-  background:red;
-  color:white;
-  font-size:20px;
-  padding:10px 30px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-}
-.stat{
-  text-align:left;
-  margin-top:10px;
-  color:white;
-}
-.warning{
-  color:yellow;
-  font-size:13px;
-}
+body{background:#000;color:#0f0;font-family:Consolas;text-align:center;}
+.machine{width:380px;margin:auto;padding:20px;border-radius:15px;background:#111;box-shadow:0 0 20px #0f0;}
+.reel span{display:inline-block;width:100px;height:100px;font-size:60px;line-height:100px;border:2px solid #0f0;margin:5px;background:black;}
+button{background:red;color:white;padding:12px 40px;font-size:20px;border-radius:10px;cursor:pointer;}
+.flash{animation:blink .3s alternate infinite;}
+@keyframes blink{from{box-shadow:0 0 5px red;}to{box-shadow:0 0 20px yellow;}}
+.warning{color:yellow;font-size:13px;}
+.stat{color:white;text-align:left;margin-top:10px;}
+input{width:120px;text-align:center;font-size:16px;}
 </style>
 </head>
 
 <body>
-
 <h2>🎰 SLOT EDUKASI</h2>
 <p class="warning">Simulator edukasi – bukan judi uang asli</p>
 
-<div class="machine">
-  <div class="reels">
-    <span id="r1">🍒</span>
-    <span id="r2">🍋</span>
-    <span id="r3">🍇</span>
+<div class="machine" id="box">
+  <div class="reel">
+    <span id="a">🍒</span>
+    <span id="b">🍋</span>
+    <span id="c">🍇</span>
   </div>
 
-  <h3>Saldo: <span id="saldo">1000</span></h3>
+  <h3>Saldo: <span id="saldo">50000</span></h3>
+
+  BET:
+  <input type="number" id="bet" value="1000" min="100" step="100">
+  <br><br>
+
   <button onclick="spin()">SPIN</button>
-  <p id="hasil"></p>
+  <p id="msg"></p>
 
   <div class="stat">
-    Total Spin: <span id="tspin">0</span><br>
+    Spin: <span id="spin">0</span><br>
     Menang: <span id="win">0</span><br>
     Kalah: <span id="lose">0</span><br>
-    Net Rugi/Untung: <span id="net">0</span>
+    Net: <span id="net">0</span>
   </div>
 </div>
 
 <script>
-let saldo=1000, tspin=0, win=0, lose=0, net=0;
+let saldo=50000,spin=0,win=0,lose=0,net=0;
 const icon=["🍒","🍋","🍇","⭐","7️⃣"];
 
 function spin(){
-  if(saldo<100){alert("Saldo habis");return;}
-  tspin++; saldo-=100; net-=100;
+  let bet=parseInt(document.getElementById("bet").value);
+  if(isNaN(bet) || bet<100){alert("Minimal bet 100");return;}
+  if(saldo<bet){alert("Saldo tidak cukup");return;}
 
-  let a=icon[Math.floor(Math.random()*icon.length)];
-  let b=icon[Math.floor(Math.random()*icon.length)];
-  let c=icon[Math.floor(Math.random()*icon.length)];
+  spin++; saldo-=bet; net-=bet;
+  box.classList.add("flash"); setTimeout(()=>box.classList.remove("flash"),300);
 
-  r1.innerHTML=a; r2.innerHTML=b; r3.innerHTML=c;
+  let x=icon[Math.floor(Math.random()*icon.length)];
+  let y=icon[Math.floor(Math.random()*icon.length)];
+  let z=icon[Math.floor(Math.random()*icon.length)];
 
-  if(a==b && b==c){
-    win++; saldo+=500; net+=500;
-    hasil.innerHTML="MENANG!";
+  a.innerHTML=x; b.innerHTML=y; c.innerHTML=z;
+
+  if(x==y && y==z){
+    let winAmount = bet * 5;   // hadiah 5x bet
+    win++; saldo+=winAmount; net+=winAmount;
+    msg.innerHTML="MENANG! +" + winAmount;
   }else{
-    lose++; hasil.innerHTML="KALAH";
+    lose++; msg.innerHTML="KALAH";
   }
 
-  saldo.innerHTML=saldo;
-  tspin.innerHTML=tspin;
-  win.innerHTML=win;
-  lose.innerHTML=lose;
-  net.innerHTML=net;
+  document.getElementById("saldo").innerHTML=saldo;
+  document.getElementById("spin").innerHTML=spin;
+  document.getElementById("win").innerHTML=win;
+  document.getElementById("lose").innerHTML=lose;
+  document.getElementById("net").innerHTML=net;
 }
 </script>
 </body>
