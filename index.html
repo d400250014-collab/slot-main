@@ -2,38 +2,46 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Slot Edukasi</title>
+<title>Slot Kartu Edukasi - Demo Mode</title>
 <style>
-body{background:#000;color:#0f0;font-family:Consolas;text-align:center;}
-.machine{width:380px;margin:auto;padding:20px;border-radius:15px;background:#111;box-shadow:0 0 20px #0f0;}
-.reel span{display:inline-block;width:100px;height:100px;font-size:60px;line-height:100px;border:2px solid #0f0;margin:5px;background:black;}
-button{background:red;color:white;padding:12px 40px;font-size:20px;border-radius:10px;cursor:pointer;}
-.flash{animation:blink .3s alternate infinite;}
-@keyframes blink{from{box-shadow:0 0 5px red;}to{box-shadow:0 0 20px yellow;}}
-.warning{color:yellow;font-size:13px;}
-.stat{color:white;text-align:left;margin-top:10px;}
-input{width:120px;text-align:center;font-size:16px;}
+body{background:#020;color:#0f0;font-family:Consolas;text-align:center;}
+.machine{width:430px;margin:auto;padding:20px;border-radius:15px;background:#111;box-shadow:0 0 25px #0f0;}
+.reel span{display:inline-block;width:110px;height:120px;font-size:48px;line-height:120px;border:2px solid #0f0;margin:5px;background:black;}
+button{background:red;color:white;padding:12px 30px;font-size:18px;border-radius:10px;margin:4px;cursor:pointer;}
+input{width:140px;text-align:center;font-size:16px;}
+.warning{color:yellow;font-size:12px;}
+.stat,.edu{text-align:left;color:white;font-size:13px;margin-top:10px;}
+.edu{border-top:1px dashed #0f0;padding-top:10px;}
+.slider{width:100%;}
+.flash{box-shadow:0 0 25px gold;}
+.spinAnim{animation:spin .2s linear infinite;}
+@keyframes spin{from{transform:translateY(0);}to{transform:translateY(10px);}}
 </style>
 </head>
 
 <body>
-<h2>🎰 SLOT EDUKASI</h2>
-<p class="warning">Simulator edukasi – bukan judi uang asli</p>
+
+<h2>🎓 SLOT KARTU EDUKASI (DEMO MODE)</h2>
+<p class="warning">Mode ini MENUNJUKKAN bahwa peluang bisa DIATUR oleh pemilik sistem.</p>
 
 <div class="machine" id="box">
   <div class="reel">
-    <span id="a">🍒</span>
-    <span id="b">🍋</span>
-    <span id="c">🍇</span>
+    <span id="a">A♠</span>
+    <span id="b">K♥</span>
+    <span id="c">Q♦</span>
   </div>
 
   <h3>Saldo: <span id="saldo">50000</span></h3>
 
   BET:
-  <input type="number" id="bet" value="1000" min="100" step="100">
-  <br><br>
+  <input type="number" id="bet" value="1000" min="100" step="100"><br>
+
+  🎚️ Peluang Menang (Bandar): <span id="rateText">10%</span>
+  <input type="range" id="rate" min="1" max="30" value="10" class="slider"><br><br>
 
   <button onclick="spin()">SPIN</button>
+  <button onclick="autoSpin()">AUTO 10x</button>
+
   <p id="msg"></p>
 
   <div class="stat">
@@ -42,39 +50,65 @@ input{width:120px;text-align:center;font-size:16px;}
     Kalah: <span id="lose">0</span><br>
     Net: <span id="net">0</span>
   </div>
+
+  <div class="edu">
+    <b>📚 Edukasi:</b><br>
+    Slider di atas mensimulasikan bagaimana pemilik sistem bisa
+    mengatur peluang menang. Walau terlihat bisa menang,
+    secara jangka panjang saldo akan tetap turun.
+  </div>
 </div>
 
 <script>
 let saldo=50000,spin=0,win=0,lose=0,net=0;
-const icon=["🍒","🍋","🍇","⭐","7️⃣"];
+const deck=[
+ "A♠","2♠","3♠","4♠","5♠","6♠","7♠","8♠","9♠","10♠","J♠","Q♠","K♠",
+ "A♥","2♥","3♥","4♥","5♥","6♥","7♥","8♥","9♥","10♥","J♥","Q♥","K♥",
+ "A♦","2♦","3♦","4♦","5♦","6♦","7♦","8♦","9♦","10♦","J♦","Q♦","K♦",
+ "A♣","2♣","3♣","4♣","5♣","6♣","7♣","8♣","9♣","10♣","J♣","Q♣","K♣"
+];
+
+rate.oninput=()=>rateText.innerHTML=rate.value+"%";
+
+function randCard(){return deck[Math.floor(Math.random()*deck.length)];}
+function val(c){return c.replace(/[♠♥♦♣]/g,"");}
 
 function spin(){
-  let bet=parseInt(document.getElementById("bet").value);
-  if(isNaN(bet) || bet<100){alert("Minimal bet 100");return;}
-  if(saldo<bet){alert("Saldo tidak cukup");return;}
+  let bet=parseInt(bet.value);
+  if(saldo<bet||bet<100)return;
 
   spin++; saldo-=bet; net-=bet;
-  box.classList.add("flash"); setTimeout(()=>box.classList.remove("flash"),300);
+  [a,b,c].forEach(x=>x.classList.add("spinAnim"));
 
-  let x=icon[Math.floor(Math.random()*icon.length)];
-  let y=icon[Math.floor(Math.random()*icon.length)];
-  let z=icon[Math.floor(Math.random()*icon.length)];
+  setTimeout(()=>{
+    [a,b,c].forEach(x=>x.classList.remove("spinAnim"));
 
-  a.innerHTML=x; b.innerHTML=y; c.innerHTML=z;
+    let winRate=parseInt(rate.value);
+    let isWin=Math.random()*100<winRate;
 
-  if(x==y && y==z){
-    let winAmount = bet * 5;   // hadiah 5x bet
-    win++; saldo+=winAmount; net+=winAmount;
-    msg.innerHTML="MENANG! +" + winAmount;
-  }else{
-    lose++; msg.innerHTML="KALAH";
-  }
+    let x,y,z;
+    if(isWin){
+      let v=["A","K","Q","J","10"][Math.floor(Math.random()*5)];
+      x=v+"♠"; y=v+"♥"; z=v+"♦";
+      saldo+=bet*4; net+=bet*4; win++;
+      msg.innerHTML="MENANG +" + bet*4;
+    }else{
+      x=randCard(); y=randCard(); z=randCard();
+      if(val(x)==val(y)&&val(y)==val(z)) z=randCard();
+      lose++; msg.innerHTML="KALAH";
+    }
 
-  document.getElementById("saldo").innerHTML=saldo;
-  document.getElementById("spin").innerHTML=spin;
-  document.getElementById("win").innerHTML=win;
-  document.getElementById("lose").innerHTML=lose;
-  document.getElementById("net").innerHTML=net;
+    a.innerHTML=x; b.innerHTML=y; c.innerHTML=z;
+    saldo.innerHTML=saldo; spin.innerHTML=spin; win.innerHTML=win; lose.innerHTML=lose; net.innerHTML=net;
+  },400);
+}
+
+function autoSpin(){
+  let i=0;
+  let t=setInterval(()=>{
+    if(i>=10||saldo<bet.value){clearInterval(t);return;}
+    spin(); i++;
+  },600);
 }
 </script>
 </body>
