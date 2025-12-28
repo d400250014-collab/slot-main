@@ -3,137 +3,157 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Casino Simulator Edukasi</title>
+<title>🎰 Mahjong Casino Simulator Edukasi</title>
 
 <style>
 body{
-    margin:0;
-    background:radial-gradient(circle,#111,#000);
-    color:#fff;
-    font-family:Arial;
-    text-align:center;
+  margin:0;
+  font-family:Arial;
+  background: radial-gradient(circle,#0b0c0f,#1b1c1f);
+  color:#fff;
+  text-align:center;
 }
-h1{color:gold;text-shadow:0 0 10px gold;}
+h1{color:#f0c000;text-shadow:0 0 10px #f0c000;}
 .slot-box{
-    margin:20px auto;
-    width:320px;
-    background:#111;
-    border:3px solid gold;
-    border-radius:15px;
-    padding:15px;
-    box-shadow:0 0 20px gold;
+  margin:20px auto;
+  width:360px;
+  background:#111;
+  border:3px solid #f0c000;
+  border-radius:15px;
+  padding:20px;
+  box-shadow:0 0 25px #f0c000;
 }
 .reels{
-    display:flex;
-    justify-content:space-around;
-    margin:20px 0;
+  display:flex;
+  justify-content:space-around;
+  margin:20px 0;
 }
 .reel{
-    width:80px;height:80px;
-    background:#000;
-    border:2px solid gold;
-    border-radius:10px;
-    font-size:45px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    animation:spin 0.5s infinite;
-}
-@keyframes spin{
-    0%{transform:rotateX(0deg)}
-    100%{transform:rotateX(360deg)}
+  width:70px; height:70px;
+  background:#222;
+  border:2px solid #f0c000;
+  border-radius:10px;
+  font-size:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition: transform 0.4s;
 }
 button{
-    width:90%;
-    margin:6px;
-    padding:10px;
-    font-size:16px;
-    border:none;
-    border-radius:8px;
-    background:gold;
-    color:#000;
-    font-weight:bold;
+  width:85%;
+  margin:5px;
+  padding:10px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#f0c000;
+  color:#000;
+  font-weight:bold;
 }
 button:active{transform:scale(0.95);}
 .balance{color:#0f0;font-size:18px;}
+label{display:block;margin:10px 0;}
+input{width:60px;text-align:center;}
+.msg{margin-top:10px;font-size:16px;color:#ff0;}
 .footer{font-size:12px;color:#888;margin-top:10px;}
 </style>
 </head>
-
 <body>
 
-<h1>🎰 Casino Simulator</h1>
+<h1>🎰 Mahjong Casino Simulator</h1>
 <div class="slot-box">
-<div class="balance">🪙 Koin: <span id="bal">10000</span></div>
+  <div class="balance">🪙 Koin: <span id="bal">10000</span></div>
 
-<div class="reels">
-<div class="reel" id="r1">🃏</div>
-<div class="reel" id="r2">🃏</div>
-<div class="reel" id="r3">🃏</div>
-</div>
+  <label>Bet Koin: <input type="number" id="bet" value="500" min="100" step="100"></label>
 
-<button onclick="spin()">SPIN</button>
-<button onclick="autoStart()">AUTO SPIN</button>
-<button onclick="autoStop()">STOP</button>
+  <div class="reels">
+    <div class="reel" id="r1">🀄</div>
+    <div class="reel" id="r2">🀄</div>
+    <div class="reel" id="r3">🀄</div>
+  </div>
 
-<div id="msg"></div>
+  <button onclick="spin()">SPIN</button>
+  <button onclick="autoStart()">AUTO SPIN</button>
+  <button onclick="autoStop()">STOP</button>
+
+  <div class="msg" id="msg">Selamat bermain!</div>
 </div>
 
 <div class="footer">Mode edukasi – tidak ada uang asli</div>
 
+<!-- Suara -->
 <audio id="spinSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.wav"></audio>
 <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.wav"></audio>
+<audio id="jackpotSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav"></audio>
 
 <script>
-let symbols = ["A♠","K♣","Q♥","J♦","7★","🃏"];
+let symbols = ["🀄","🀅","🀆","🀇","🀈","🀉"]; // tile mahjong
+let multipliers = [1,2,3,5]; // x1, x2, x3, x5
 let balance = 10000;
-let bet = 500;
-let winRate = 0.6; // 60% win chance (bisa diubah)
+let winRate = 0.6; // 60% chance menang
 let auto;
+const r1=document.getElementById('r1');
+const r2=document.getElementById('r2');
+const r3=document.getElementById('r3');
 
-function rand(){
- return symbols[Math.floor(Math.random()*symbols.length)];
-}
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function spin(){
- if(balance < bet){msg("Koin habis!"); return;}
- balance -= bet;
- document.getElementById("spinSound").play();
+  let bet = parseInt(document.getElementById('bet').value);
+  if(balance<bet){msg("Koin habis!"); return;}
+  balance -= bet;
 
- let win = Math.random() < winRate;
+  document.getElementById("spinSound").play();
 
- if(win){
-   let s = rand();
-   setReel(s,s,s);
-   let prize = bet*3;
-   balance += prize;
-   document.getElementById("winSound").play();
-   msg("MENANG +"+prize+" 🪙");
- }else{
-   setReel(rand(),rand(),rand());
-   msg("Coba lagi...");
- }
- update();
+  let win = Math.random()<winRate;
+  let jackpot=false;
+
+  let s1=rand(symbols), s2=rand(symbols), s3=rand(symbols);
+  if(win){
+    // Kalau menang, bisa jackpot acak
+    jackpot = Math.random()<0.1; // 10% chance jackpot
+    let multiplier = rand(multipliers);
+    if(jackpot){
+      s1=s2=s3="🀄"; // simbol jackpot
+      multiplier = 5;
+    } else {
+      // Bisa tiga simbol sama untuk menang
+      s1=s2=s3=rand(symbols);
+    }
+    setReel(s1,s2,s3);
+    let prize = bet*multiplier;
+    balance += prize;
+    document.getElementById("winSound").play();
+    if(jackpot){
+      document.getElementById("jackpotSound").play();
+      msg("🎉 JACKPOT! x"+multiplier+" MENANG +"+prize+" 🪙");
+    } else {
+      msg("🎉 MENANG x"+multiplier+" +"+prize+" 🪙");
+    }
+  } else{
+    setReel(s1,s2,s3);
+    msg("Coba lagi...");
+  }
+  update();
 }
 
 function setReel(a,b,c){
- r1.innerText=a; r2.innerText=b; r3.innerText=c;
+  r1.style.transform="rotateX(360deg)";
+  r2.style.transform="rotateX(360deg)";
+  r3.style.transform="rotateX(360deg)";
+  setTimeout(()=>{
+    r1.innerText=a; r2.innerText=b; r3.innerText=c;
+    r1.style.transform="rotateX(0deg)";
+    r2.style.transform="rotateX(0deg)";
+    r3.style.transform="rotateX(0deg)";
+  },300);
 }
 
-function update(){
- document.getElementById("bal").innerText = balance;
-}
+function update(){ document.getElementById("bal").innerText = balance; }
+function msg(t){ document.getElementById("msg").innerText=t; }
 
-function msg(t){
- document.getElementById("msg").innerText=t;
-}
-
-function autoStart(){
- auto = setInterval(spin,900);
-}
-function autoStop(){
- clearInterval(auto);
-}
+function autoStart(){ auto=setInterval(spin,1000); msg("Auto spin ON..."); }
+function autoStop(){ clearInterval(auto); msg("Auto spin OFF"); }
 </script>
 
 </body>
