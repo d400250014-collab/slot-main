@@ -1,118 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Slot Kartu Edukasi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casino Simulator Edukasi</title>
+
 <style>
-body{background:#020;color:#0f0;font-family:Consolas;text-align:center;}
-.machine{width:430px;margin:auto;padding:20px;border-radius:15px;background:#111;box-shadow:0 0 25px #0f0;}
-.reel span{display:inline-block;width:110px;height:120px;font-size:48px;line-height:120px;border:2px solid #0f0;margin:5px;background:black;}
-button{background:red;color:white;padding:12px 30px;font-size:18px;border-radius:10px;margin:4px;cursor:pointer;}
-input{width:140px;text-align:center;font-size:16px;}
-.warning{color:yellow;font-size:12px;}
-.stat,.edu{text-align:left;color:white;font-size:13px;margin-top:10px;}
-.edu{border-top:1px dashed #0f0;padding-top:10px;}
-.slider{width:100%;}
-.spinAnim{animation:spin .2s linear infinite;}
-@keyframes spin{from{transform:translateY(0);}to{transform:translateY(10px);}}
-.flash{box-shadow:0 0 25px gold;}
+body{
+    margin:0;
+    background:radial-gradient(circle,#111,#000);
+    color:#fff;
+    font-family:Arial;
+    text-align:center;
+}
+h1{color:gold;text-shadow:0 0 10px gold;}
+.slot-box{
+    margin:20px auto;
+    width:320px;
+    background:#111;
+    border:3px solid gold;
+    border-radius:15px;
+    padding:15px;
+    box-shadow:0 0 20px gold;
+}
+.reels{
+    display:flex;
+    justify-content:space-around;
+    margin:20px 0;
+}
+.reel{
+    width:80px;height:80px;
+    background:#000;
+    border:2px solid gold;
+    border-radius:10px;
+    font-size:45px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    animation:spin 0.5s infinite;
+}
+@keyframes spin{
+    0%{transform:rotateX(0deg)}
+    100%{transform:rotateX(360deg)}
+}
+button{
+    width:90%;
+    margin:6px;
+    padding:10px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    background:gold;
+    color:#000;
+    font-weight:bold;
+}
+button:active{transform:scale(0.95);}
+.balance{color:#0f0;font-size:18px;}
+.footer{font-size:12px;color:#888;margin-top:10px;}
 </style>
 </head>
 
 <body>
 
-<h2>🎓 SLOT KARTU EDUKASI (DEMO)</h2>
-<p class="warning">Simulator edukasi – menunjukkan peluang bisa DIATUR.</p>
+<h1>🎰 Casino Simulator</h1>
+<div class="slot-box">
+<div class="balance">🪙 Koin: <span id="bal">10000</span></div>
 
-<div class="machine" id="box">
-  <div class="reel">
-    <span id="a">A♠</span>
-    <span id="b">K♥</span>
-    <span id="c">Q♦</span>
-  </div>
-
-  <h3>Saldo: <span id="saldo">50000</span></h3>
-
-  BET:
-  <input type="number" id="bet" value="1000" min="100" step="100"><br>
-
-  🎚️ Peluang Menang:
-  <input type="range" id="rate" min="1" max="30" value="10" class="slider">
-  <span id="rateText">10%</span><br><br>
-
-  <button id="spinBtn">SPIN</button>
-  <button id="autoBtn">AUTO 10x</button>
-
-  <p id="msg"></p>
-
-  <div class="stat">
-    Spin: <span id="spinCount">0</span><br>
-    Menang: <span id="winCount">0</span><br>
-    Kalah: <span id="loseCount">0</span><br>
-    Net: <span id="netCount">0</span>
-  </div>
-
-  <div class="edu">
-    Ini DEMO edukasi: slider menunjukkan bahwa peluang bisa dimanipulasi oleh pemilik sistem.
-  </div>
+<div class="reels">
+<div class="reel" id="r1">🃏</div>
+<div class="reel" id="r2">🃏</div>
+<div class="reel" id="r3">🃏</div>
 </div>
 
+<button onclick="spin()">SPIN</button>
+<button onclick="autoStart()">AUTO SPIN</button>
+<button onclick="autoStop()">STOP</button>
+
+<div id="msg"></div>
+</div>
+
+<div class="footer">Mode edukasi – tidak ada uang asli</div>
+
+<audio id="spinSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.wav"></audio>
+<audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.wav"></audio>
+
 <script>
-let saldo=50000,spin=0,win=0,lose=0,net=0;
+let symbols = ["A♠","K♣","Q♥","J♦","7★","🃏"];
+let balance = 10000;
+let bet = 500;
+let winRate = 0.6; // 60% win chance (bisa diubah)
+let auto;
 
-const deck=["A","K","Q","J","10"];
-
-const saldoEl=document.getElementById("saldo");
-const spinEl=document.getElementById("spinCount");
-const winEl=document.getElementById("winCount");
-const loseEl=document.getElementById("loseCount");
-const netEl=document.getElementById("netCount");
-const msgEl=document.getElementById("msg");
-const rate=document.getElementById("rate");
-const rateText=document.getElementById("rateText");
-
-rate.oninput=()=>rateText.innerHTML=rate.value+"%";
-
-function spinOnce(){
-  let bet=parseInt(document.getElementById("bet").value);
-  if(isNaN(bet)||bet<100||saldo<bet)return;
-
-  spin++; saldo-=bet; net-=bet;
-
-  let isWin=Math.random()*100<parseInt(rate.value);
-
-  let v=deck[Math.floor(Math.random()*deck.length)];
-  let a=document.getElementById("a");
-  let b=document.getElementById("b");
-  let c=document.getElementById("c");
-
-  if(isWin){
-    a.innerHTML=v+"♠"; b.innerHTML=v+"♥"; c.innerHTML=v+"♦";
-    let w=bet*4; saldo+=w; net+=w; win++;
-    msgEl.innerHTML="MENANG +" + w;
-  }else{
-    a.innerHTML=deck[Math.floor(Math.random()*5)]+"♠";
-    b.innerHTML=deck[Math.floor(Math.random()*5)]+"♥";
-    c.innerHTML=deck[Math.floor(Math.random()*5)]+"♦";
-    lose++; msgEl.innerHTML="KALAH";
-  }
-
-  saldoEl.innerHTML=saldo;
-  spinEl.innerHTML=spin;
-  winEl.innerHTML=win;
-  loseEl.innerHTML=lose;
-  netEl.innerHTML=net;
+function rand(){
+ return symbols[Math.floor(Math.random()*symbols.length)];
 }
 
-document.getElementById("spinBtn").onclick=spinOnce;
+function spin(){
+ if(balance < bet){msg("Koin habis!"); return;}
+ balance -= bet;
+ document.getElementById("spinSound").play();
 
-document.getElementById("autoBtn").onclick=()=>{
-  let i=0;
-  let t=setInterval(()=>{
-    if(i>=10){clearInterval(t);return;}
-    spinOnce(); i++;
-  },500);
-};
+ let win = Math.random() < winRate;
+
+ if(win){
+   let s = rand();
+   setReel(s,s,s);
+   let prize = bet*3;
+   balance += prize;
+   document.getElementById("winSound").play();
+   msg("MENANG +"+prize+" 🪙");
+ }else{
+   setReel(rand(),rand(),rand());
+   msg("Coba lagi...");
+ }
+ update();
+}
+
+function setReel(a,b,c){
+ r1.innerText=a; r2.innerText=b; r3.innerText=c;
+}
+
+function update(){
+ document.getElementById("bal").innerText = balance;
+}
+
+function msg(t){
+ document.getElementById("msg").innerText=t;
+}
+
+function autoStart(){
+ auto = setInterval(spin,900);
+}
+function autoStop(){
+ clearInterval(auto);
+}
 </script>
+
 </body>
 </html>
