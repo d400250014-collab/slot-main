@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Slot Kartu Edukasi - Demo Mode</title>
+<title>Slot Kartu Edukasi</title>
 <style>
 body{background:#020;color:#0f0;font-family:Consolas;text-align:center;}
 .machine{width:430px;margin:auto;padding:20px;border-radius:15px;background:#111;box-shadow:0 0 25px #0f0;}
@@ -13,16 +13,16 @@ input{width:140px;text-align:center;font-size:16px;}
 .stat,.edu{text-align:left;color:white;font-size:13px;margin-top:10px;}
 .edu{border-top:1px dashed #0f0;padding-top:10px;}
 .slider{width:100%;}
-.flash{box-shadow:0 0 25px gold;}
 .spinAnim{animation:spin .2s linear infinite;}
 @keyframes spin{from{transform:translateY(0);}to{transform:translateY(10px);}}
+.flash{box-shadow:0 0 25px gold;}
 </style>
 </head>
 
 <body>
 
-<h2>🎓 SLOT KARTU EDUKASI (DEMO MODE)</h2>
-<p class="warning">Mode ini MENUNJUKKAN bahwa peluang bisa DIATUR oleh pemilik sistem.</p>
+<h2>🎓 SLOT KARTU EDUKASI (DEMO)</h2>
+<p class="warning">Simulator edukasi – menunjukkan peluang bisa DIATUR.</p>
 
 <div class="machine" id="box">
   <div class="reel">
@@ -36,80 +36,83 @@ input{width:140px;text-align:center;font-size:16px;}
   BET:
   <input type="number" id="bet" value="1000" min="100" step="100"><br>
 
-  🎚️ Peluang Menang (Bandar): <span id="rateText">10%</span>
-  <input type="range" id="rate" min="1" max="30" value="10" class="slider"><br><br>
+  🎚️ Peluang Menang:
+  <input type="range" id="rate" min="1" max="30" value="10" class="slider">
+  <span id="rateText">10%</span><br><br>
 
-  <button onclick="spin()">SPIN</button>
-  <button onclick="autoSpin()">AUTO 10x</button>
+  <button id="spinBtn">SPIN</button>
+  <button id="autoBtn">AUTO 10x</button>
 
   <p id="msg"></p>
 
   <div class="stat">
-    Spin: <span id="spin">0</span><br>
-    Menang: <span id="win">0</span><br>
-    Kalah: <span id="lose">0</span><br>
-    Net: <span id="net">0</span>
+    Spin: <span id="spinCount">0</span><br>
+    Menang: <span id="winCount">0</span><br>
+    Kalah: <span id="loseCount">0</span><br>
+    Net: <span id="netCount">0</span>
   </div>
 
   <div class="edu">
-    <b>📚 Edukasi:</b><br>
-    Slider di atas mensimulasikan bagaimana pemilik sistem bisa
-    mengatur peluang menang. Walau terlihat bisa menang,
-    secara jangka panjang saldo akan tetap turun.
+    Ini DEMO edukasi: slider menunjukkan bahwa peluang bisa dimanipulasi oleh pemilik sistem.
   </div>
 </div>
 
 <script>
 let saldo=50000,spin=0,win=0,lose=0,net=0;
-const deck=[
- "A♠","2♠","3♠","4♠","5♠","6♠","7♠","8♠","9♠","10♠","J♠","Q♠","K♠",
- "A♥","2♥","3♥","4♥","5♥","6♥","7♥","8♥","9♥","10♥","J♥","Q♥","K♥",
- "A♦","2♦","3♦","4♦","5♦","6♦","7♦","8♦","9♦","10♦","J♦","Q♦","K♦",
- "A♣","2♣","3♣","4♣","5♣","6♣","7♣","8♣","9♣","10♣","J♣","Q♣","K♣"
-];
+
+const deck=["A","K","Q","J","10"];
+
+const saldoEl=document.getElementById("saldo");
+const spinEl=document.getElementById("spinCount");
+const winEl=document.getElementById("winCount");
+const loseEl=document.getElementById("loseCount");
+const netEl=document.getElementById("netCount");
+const msgEl=document.getElementById("msg");
+const rate=document.getElementById("rate");
+const rateText=document.getElementById("rateText");
 
 rate.oninput=()=>rateText.innerHTML=rate.value+"%";
 
-function randCard(){return deck[Math.floor(Math.random()*deck.length)];}
-function val(c){return c.replace(/[♠♥♦♣]/g,"");}
-
-function spin(){
-  let bet=parseInt(bet.value);
-  if(saldo<bet||bet<100)return;
+function spinOnce(){
+  let bet=parseInt(document.getElementById("bet").value);
+  if(isNaN(bet)||bet<100||saldo<bet)return;
 
   spin++; saldo-=bet; net-=bet;
-  [a,b,c].forEach(x=>x.classList.add("spinAnim"));
 
-  setTimeout(()=>{
-    [a,b,c].forEach(x=>x.classList.remove("spinAnim"));
+  let isWin=Math.random()*100<parseInt(rate.value);
 
-    let winRate=parseInt(rate.value);
-    let isWin=Math.random()*100<winRate;
+  let v=deck[Math.floor(Math.random()*deck.length)];
+  let a=document.getElementById("a");
+  let b=document.getElementById("b");
+  let c=document.getElementById("c");
 
-    let x,y,z;
-    if(isWin){
-      let v=["A","K","Q","J","10"][Math.floor(Math.random()*5)];
-      x=v+"♠"; y=v+"♥"; z=v+"♦";
-      saldo+=bet*4; net+=bet*4; win++;
-      msg.innerHTML="MENANG +" + bet*4;
-    }else{
-      x=randCard(); y=randCard(); z=randCard();
-      if(val(x)==val(y)&&val(y)==val(z)) z=randCard();
-      lose++; msg.innerHTML="KALAH";
-    }
+  if(isWin){
+    a.innerHTML=v+"♠"; b.innerHTML=v+"♥"; c.innerHTML=v+"♦";
+    let w=bet*4; saldo+=w; net+=w; win++;
+    msgEl.innerHTML="MENANG +" + w;
+  }else{
+    a.innerHTML=deck[Math.floor(Math.random()*5)]+"♠";
+    b.innerHTML=deck[Math.floor(Math.random()*5)]+"♥";
+    c.innerHTML=deck[Math.floor(Math.random()*5)]+"♦";
+    lose++; msgEl.innerHTML="KALAH";
+  }
 
-    a.innerHTML=x; b.innerHTML=y; c.innerHTML=z;
-    saldo.innerHTML=saldo; spin.innerHTML=spin; win.innerHTML=win; lose.innerHTML=lose; net.innerHTML=net;
-  },400);
+  saldoEl.innerHTML=saldo;
+  spinEl.innerHTML=spin;
+  winEl.innerHTML=win;
+  loseEl.innerHTML=lose;
+  netEl.innerHTML=net;
 }
 
-function autoSpin(){
+document.getElementById("spinBtn").onclick=spinOnce;
+
+document.getElementById("autoBtn").onclick=()=>{
   let i=0;
   let t=setInterval(()=>{
-    if(i>=10||saldo<bet.value){clearInterval(t);return;}
-    spin(); i++;
-  },600);
-}
+    if(i>=10){clearInterval(t);return;}
+    spinOnce(); i++;
+  },500);
+};
 </script>
 </body>
 </html>
