@@ -3,139 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manajemen Kelapa</title>
+<title>Manajemen Kelapa - Dashboard</title>
 <style>
-body{
-  font-family: Arial;
-  background:#e6f5e6;
-  color:#014d01;
-  margin:0;
-  padding:0;
-}
-header{
-  background:#27ae60;
-  color:white;
-  text-align:center;
-  padding:20px 0;
-  font-size:24px;
-  font-weight:bold;
-}
-.container{
-  max-width:800px;
-  margin:20px auto;
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
+body{font-family:Arial;margin:0;padding:0;background:#e6f5e6;color:#014d01;}
+header{background:#27ae60;color:white;text-align:center;padding:20px;font-size:24px;font-weight:bold;}
+.container{max-width:900px;margin:20px auto;background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.2);}
 h2{color:#27ae60;}
-table{
-  width:100%;
-  border-collapse: collapse;
-  margin-bottom:20px;
-}
-th, td{
-  border:1px solid #27ae60;
-  padding:8px;
-  text-align:center;
-}
+table{width:100%;border-collapse: collapse;margin-bottom:20px;}
+th, td{border:1px solid #27ae60;padding:8px;text-align:center;}
 th{background:#2ecc71;color:white;}
-input, select{
-  padding:5px;
-  margin:5px 0;
-}
-button{
-  background:#27ae60;
-  color:white;
-  border:none;
-  padding:8px 12px;
-  cursor:pointer;
-  border-radius:5px;
-}
+input, select{padding:5px;margin:5px 0;}
+button{background:#27ae60;color:white;border:none;padding:8px 12px;cursor:pointer;border-radius:5px;}
 button:hover{background:#2ecc71;}
-.msg{
-  margin:10px 0;
-  color:#e74c3c;
-  font-weight:bold;
-}
+.msg{margin:10px 0;color:#e74c3c;font-weight:bold;}
+#loginBox{max-width:400px;margin:100px auto;padding:20px;background:white;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.2);}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<header>Manajemen Kelapa</header>
+<div id="loginBox">
+  <h2>Login Admin</h2>
+  <label>Username:</label>
+  <input type="text" id="username" value=""><br>
+  <label>Password:</label>
+  <input type="password" id="password" value=""><br>
+  <button onclick="login()">Login</button>
+  <div class="msg" id="loginMsg"></div>
+</div>
+
+<div id="dashboard" style="display:none;">
+<header>Manajemen Kelapa - Dashboard</header>
 <div class="container">
 
-<h2>Tambah Stock Datang</h2>
-<label>Jumlah Kelapa:</label>
+<h2>Stock Saat Ini: <span id="currentStock">0</span> kelapa</h2>
+
+<h2>Tambah Stock Masuk</h2>
+<label>Jumlah:</label>
 <input type="number" id="stockMasuk" min="1" value="10">
 <button onclick="tambahStock()">Tambah</button>
 
-<h2>Stock Kelapa Saat Ini</h2>
-<div id="currentStock">0</div>
-
-<h2>Kelapa Keluar / Penjualan</h2>
-<label>Jumlah Kelapa:</label>
+<h2>Stock Keluar</h2>
+<label>Jumlah:</label>
 <input type="number" id="stockKeluar" min="1" value="5">
 <button onclick="kurangiStock()">Kurangi</button>
 
 <h2>Panen</h2>
-<label>Tanggal Panen:</label>
+<label>Tanggal:</label>
 <input type="date" id="tanggalPanen">
-<label>Jumlah Kelapa:</label>
+<label>Jumlah:</label>
 <input type="number" id="panenJumlah" min="1" value="20">
 <button onclick="tambahPanen()">Catat Panen</button>
 
-<h2>Riwayat Panen</h2>
-<table id="tablePanen">
-<tr><th>Tanggal</th><th>Jumlah</th></tr>
+<h2>Riwayat Transaksi</h2>
+<table id="tableRiwayat">
+<tr><th>Tanggal</th><th>Jenis</th><th>Jumlah</th><th>Stock Setelah</th></tr>
 </table>
 
+<h2>Grafik Per Transaksi</h2>
+<canvas id="chartStock" height="150"></canvas>
+
+<button onclick="exportCSV()">Export CSV</button>
+
+</div>
 </div>
 
 <script>
-// Inisialisasi stock
+// ===== Login Admin =====
+function login(){
+  const user = document.getElementById('username').value;
+  const pass = document.getElementById('password').value;
+  if(user==='admin' && pass==='admin123'){
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    initDashboard();
+  } else {
+    document.getElementById('loginMsg').innerText='Username / Password salah!';
+  }
+}
+
+// ===== Data =====
 let stock = parseInt(localStorage.getItem('stockKelapa')) || 0;
-updateStock();
+let riwayat = JSON.parse(localStorage.getItem('riwayatKelapa')) || [];
 
-// Fungsi update stock
+// ===== Update Stock & Tabel =====
 function updateStock(){
-  document.getElementById('currentStock').innerText = stock + " kelapa";
+  document.getElementById('currentStock').innerText=stock;
   localStorage.setItem('stockKelapa', stock);
+  updateTable();
+  updateChart();
 }
 
-// Tambah stock datang
+// ===== Update Tabel =====
+function updateTable(){
+  let table = document.getElementById('tableRiwayat');
+  table.innerHTML='<tr><th>Tanggal</th><th>Jenis</th><th>Jumlah</th><th>Stock Setelah</th></tr>';
+  riwayat.forEach(item=>{
+    let row = table.insertRow(-1);
+    row.insertCell(0).innerText=item.tanggal;
+    row.insertCell(1).innerText=item.jenis;
+    row.insertCell(2).innerText=item.jumlah;
+    row.insertCell(3).innerText=item.stockAfter;
+  });
+}
+
+// ===== Update Chart =====
+let chart;
+function updateChart(){
+  const labels = riwayat.map(item=>item.tanggal+'-'+item.jenis);
+  const data = riwayat.map(item=>item.stockAfter);
+  if(chart) chart.destroy();
+  const ctx = document.getElementById('chartStock').getContext('2d');
+  chart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        label:'Stock Kelapa',
+        data:data,
+        borderColor:'#27ae60',
+        backgroundColor:'rgba(39,174,96,0.2)',
+        tension:0.3
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}}}
+  });
+}
+
+// ===== Tambah Stock =====
 function tambahStock(){
-  let masuk = parseInt(document.getElementById('stockMasuk').value);
-  if(isNaN(masuk) || masuk<=0){alert("Masukkan jumlah valid!"); return;}
-  stock += masuk;
+  let masuk=parseInt(document.getElementById('stockMasuk').value);
+  if(isNaN(masuk)||masuk<=0){alert("Jumlah valid!"); return;}
+  stock+=masuk;
+  const tanggal=new Date().toLocaleDateString();
+  riwayat.push({tanggal:tanggal,jenis:'Masuk',jumlah:masuk,stockAfter:stock});
+  localStorage.setItem('riwayatKelapa',JSON.stringify(riwayat));
   updateStock();
 }
 
-// Kurangi stock keluar
+// ===== Kurangi Stock =====
 function kurangiStock(){
-  let keluar = parseInt(document.getElementById('stockKeluar').value);
-  if(isNaN(keluar) || keluar<=0 || keluar>stock){alert("Jumlah tidak valid!"); return;}
-  stock -= keluar;
+  let keluar=parseInt(document.getElementById('stockKeluar').value);
+  if(isNaN(keluar)||keluar<=0||keluar>stock){alert("Jumlah tidak valid!"); return;}
+  stock-=keluar;
+  const tanggal=new Date().toLocaleDateString();
+  riwayat.push({tanggal:tanggal,jenis:'Keluar',jumlah:keluar,stockAfter:stock});
+  localStorage.setItem('riwayatKelapa',JSON.stringify(riwayat));
   updateStock();
 }
 
-// Catat panen
+// ===== Catat Panen =====
 function tambahPanen(){
-  let tanggal = document.getElementById('tanggalPanen').value;
-  let jumlah = parseInt(document.getElementById('panenJumlah').value);
-  if(!tanggal){alert("Pilih tanggal panen!"); return;}
-  if(isNaN(jumlah)||jumlah<=0){alert("Masukkan jumlah valid!"); return;}
-
-  let table = document.getElementById('tablePanen');
-  let row = table.insertRow(-1);
-  let cell1 = row.insertCell(0);
-  let cell2 = row.insertCell(1);
-  cell1.innerText = tanggal;
-  cell2.innerText = jumlah;
-
-  stock += jumlah;
+  let tanggal=document.getElementById('tanggalPanen').value;
+  let jumlah=parseInt(document.getElementById('panenJumlah').value);
+  if(!tanggal){alert("Pilih tanggal!"); return;}
+  if(isNaN(jumlah)||jumlah<=0){alert("Jumlah valid!"); return;}
+  stock+=jumlah;
+  riwayat.push({tanggal:tanggal,jenis:'Panen',jumlah:jumlah,stockAfter:stock});
+  localStorage.setItem('riwayatKelapa',JSON.stringify(riwayat));
   updateStock();
 }
+
+// ===== Export CSV =====
+function exportCSV(){
+  let csv='Tanggal,Jenis,Jumlah,Stock Setelah\n';
+  riwayat.forEach(item=>{
+    csv+=`${item.tanggal},${item.jenis},${item.jumlah},${item.stockAfter}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='riwayat_kelapa.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== Init Dashboard =====
+function initDashboard(){ updateStock(); }
 </script>
 
 </body>
