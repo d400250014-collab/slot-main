@@ -3,157 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎰 amel bandar Edukasi</title>
-
+<title>Manajemen Kelapa</title>
 <style>
 body{
+  font-family: Arial;
+  background:#e6f5e6;
+  color:#014d01;
   margin:0;
-  font-family:Arial;
-  background: radial-gradient(circle,#0b0c0f,#1b1c1f);
-  color:#fff;
+  padding:0;
+}
+header{
+  background:#27ae60;
+  color:white;
   text-align:center;
-}
-h1{color:#f0c000;text-shadow:0 0 10px #f0c000;}
-.slot-box{
-  margin:20px auto;
-  width:360px;
-  background:#111;
-  border:3px solid #f0c000;
-  border-radius:15px;
-  padding:20px;
-  box-shadow:0 0 25px #f0c000;
-}
-.reels{
-  display:flex;
-  justify-content:space-around;
-  margin:20px 0;
-}
-.reel{
-  width:70px; height:70px;
-  background:#222;
-  border:2px solid #f0c000;
-  border-radius:10px;
-  font-size:40px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition: transform 0.4s;
-}
-button{
-  width:85%;
-  margin:5px;
-  padding:10px;
-  font-size:16px;
-  border:none;
-  border-radius:8px;
-  background:#f0c000;
-  color:#000;
+  padding:20px 0;
+  font-size:24px;
   font-weight:bold;
 }
-button:active{transform:scale(0.95);}
-.balance{color:#0f0;font-size:18px;}
-label{display:block;margin:10px 0;}
-input{width:60px;text-align:center;}
-.msg{margin-top:10px;font-size:16px;color:#ff0;}
-.footer{font-size:12px;color:#888;margin-top:10px;}
+.container{
+  max-width:800px;
+  margin:20px auto;
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+h2{color:#27ae60;}
+table{
+  width:100%;
+  border-collapse: collapse;
+  margin-bottom:20px;
+}
+th, td{
+  border:1px solid #27ae60;
+  padding:8px;
+  text-align:center;
+}
+th{background:#2ecc71;color:white;}
+input, select{
+  padding:5px;
+  margin:5px 0;
+}
+button{
+  background:#27ae60;
+  color:white;
+  border:none;
+  padding:8px 12px;
+  cursor:pointer;
+  border-radius:5px;
+}
+button:hover{background:#2ecc71;}
+.msg{
+  margin:10px 0;
+  color:#e74c3c;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<h1>🎰 BISNIS KAK AMEL</h1>
-<div class="slot-box">
-  <div class="balance">🪙 Koin: <span id="bal">10000</span></div>
+<header>Manajemen Kelapa</header>
+<div class="container">
 
-  <label>Bet Koin: <input type="number" id="bet" value="500" min="100" step="100"></label>
+<h2>Tambah Stock Datang</h2>
+<label>Jumlah Kelapa:</label>
+<input type="number" id="stockMasuk" min="1" value="10">
+<button onclick="tambahStock()">Tambah</button>
 
-  <div class="reels">
-    <div class="reel" id="r1">🀄</div>
-    <div class="reel" id="r2">🀄</div>
-    <div class="reel" id="r3">🀄</div>
-  </div>
+<h2>Stock Kelapa Saat Ini</h2>
+<div id="currentStock">0</div>
 
-  <button onclick="spin()">SPIN</button>
-  <button onclick="autoStart()">AUTO SPIN</button>
-  <button onclick="autoStop()">STOP</button>
+<h2>Kelapa Keluar / Penjualan</h2>
+<label>Jumlah Kelapa:</label>
+<input type="number" id="stockKeluar" min="1" value="5">
+<button onclick="kurangiStock()">Kurangi</button>
 
-  <div class="msg" id="msg">Selamat bermain!</div>
+<h2>Panen</h2>
+<label>Tanggal Panen:</label>
+<input type="date" id="tanggalPanen">
+<label>Jumlah Kelapa:</label>
+<input type="number" id="panenJumlah" min="1" value="20">
+<button onclick="tambahPanen()">Catat Panen</button>
+
+<h2>Riwayat Panen</h2>
+<table id="tablePanen">
+<tr><th>Tanggal</th><th>Jumlah</th></tr>
+</table>
+
 </div>
 
-<div class="footer">Mode edukasi – tidak ada uang asli</div>
-
-<!-- Suara -->
-<audio id="spinSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.wav"></audio>
-<audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.wav"></audio>
-<audio id="jackpotSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.wav"></audio>
-
 <script>
-let symbols = ["🀄","🀅","🀆","🀇","🀈","🀉"]; // tile mahjong
-let multipliers = [1,2,3,5]; // x1, x2, x3, x5
-let balance = 10000;
-let winRate = 0.6; // 60% chance menang
-let auto;
-const r1=document.getElementById('r1');
-const r2=document.getElementById('r2');
-const r3=document.getElementById('r3');
+// Inisialisasi stock
+let stock = parseInt(localStorage.getItem('stockKelapa')) || 0;
+updateStock();
 
-function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
-function spin(){
-  let bet = parseInt(document.getElementById('bet').value);
-  if(balance<bet){msg("Koin habis!"); return;}
-  balance -= bet;
-
-  document.getElementById("spinSound").play();
-
-  let win = Math.random()<winRate;
-  let jackpot=false;
-
-  let s1=rand(symbols), s2=rand(symbols), s3=rand(symbols);
-  if(win){
-    // Kalau menang, bisa jackpot acak
-    jackpot = Math.random()<0.1; // 10% chance jackpot
-    let multiplier = rand(multipliers);
-    if(jackpot){
-      s1=s2=s3="🀄"; // simbol jackpot
-      multiplier = 5;
-    } else {
-      // Bisa tiga simbol sama untuk menang
-      s1=s2=s3=rand(symbols);
-    }
-    setReel(s1,s2,s3);
-    let prize = bet*multiplier;
-    balance += prize;
-    document.getElementById("winSound").play();
-    if(jackpot){
-      document.getElementById("jackpotSound").play();
-      msg("🎉 JACKPOT! x"+multiplier+" MENANG +"+prize+" 🪙");
-    } else {
-      msg("🎉 MENANG x"+multiplier+" +"+prize+" 🪙");
-    }
-  } else{
-    setReel(s1,s2,s3);
-    msg("Coba lagi...");
-  }
-  update();
+// Fungsi update stock
+function updateStock(){
+  document.getElementById('currentStock').innerText = stock + " kelapa";
+  localStorage.setItem('stockKelapa', stock);
 }
 
-function setReel(a,b,c){
-  r1.style.transform="rotateX(360deg)";
-  r2.style.transform="rotateX(360deg)";
-  r3.style.transform="rotateX(360deg)";
-  setTimeout(()=>{
-    r1.innerText=a; r2.innerText=b; r3.innerText=c;
-    r1.style.transform="rotateX(0deg)";
-    r2.style.transform="rotateX(0deg)";
-    r3.style.transform="rotateX(0deg)";
-  },300);
+// Tambah stock datang
+function tambahStock(){
+  let masuk = parseInt(document.getElementById('stockMasuk').value);
+  if(isNaN(masuk) || masuk<=0){alert("Masukkan jumlah valid!"); return;}
+  stock += masuk;
+  updateStock();
 }
 
-function update(){ document.getElementById("bal").innerText = balance; }
-function msg(t){ document.getElementById("msg").innerText=t; }
+// Kurangi stock keluar
+function kurangiStock(){
+  let keluar = parseInt(document.getElementById('stockKeluar').value);
+  if(isNaN(keluar) || keluar<=0 || keluar>stock){alert("Jumlah tidak valid!"); return;}
+  stock -= keluar;
+  updateStock();
+}
 
-function autoStart(){ auto=setInterval(spin,1000); msg("Auto spin ON..."); }
-function autoStop(){ clearInterval(auto); msg("Auto spin OFF"); }
+// Catat panen
+function tambahPanen(){
+  let tanggal = document.getElementById('tanggalPanen').value;
+  let jumlah = parseInt(document.getElementById('panenJumlah').value);
+  if(!tanggal){alert("Pilih tanggal panen!"); return;}
+  if(isNaN(jumlah)||jumlah<=0){alert("Masukkan jumlah valid!"); return;}
+
+  let table = document.getElementById('tablePanen');
+  let row = table.insertRow(-1);
+  let cell1 = row.insertCell(0);
+  let cell2 = row.insertCell(1);
+  cell1.innerText = tanggal;
+  cell2.innerText = jumlah;
+
+  stock += jumlah;
+  updateStock();
+}
 </script>
 
 </body>
