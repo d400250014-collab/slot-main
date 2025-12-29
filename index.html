@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manajemen Kelapa - Dashboard</title>
+<title>Manajemen Kelapa - Dashboard + Storage</title>
 <style>
 body{font-family:Arial;margin:0;padding:0;background:#e6f5e6;color:#014d01;}
 header{background:#27ae60;color:white;text-align:center;padding:20px;font-size:24px;font-weight:bold;}
@@ -17,6 +17,7 @@ button{background:#27ae60;color:white;border:none;padding:8px 12px;cursor:pointe
 button:hover{background:#2ecc71;}
 .msg{margin:10px 0;color:#e74c3c;font-weight:bold;}
 #loginBox{max-width:400px;margin:100px auto;padding:20px;background:white;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.2);}
+textarea{width:100%;height:100px;margin:10px 0;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -62,6 +63,13 @@ button:hover{background:#2ecc71;}
 
 <h2>Grafik Per Transaksi</h2>
 <canvas id="chartStock" height="150"></canvas>
+
+<h2>Manajemen Storage</h2>
+<button onclick="lihatStorage()">Lihat Storage</button>
+<button onclick="hapusStock()">Hapus Stock Saja</button>
+<button onclick="hapusRiwayat()">Hapus Riwayat Saja</button>
+<button onclick="hapusSemua()">Hapus Semua</button>
+<textarea id="storageView" readonly placeholder="Data localStorage akan tampil di sini..."></textarea>
 
 <button onclick="exportCSV()">Export CSV</button>
 
@@ -177,6 +185,42 @@ function exportCSV(){
   a.download='riwayat_kelapa.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ===== Storage Management =====
+function lihatStorage(){
+  const stockData=localStorage.getItem('stockKelapa');
+  const riwayatData=localStorage.getItem('riwayatKelapa');
+  document.getElementById('storageView').value=`stockKelapa: ${stockData}\nriwayatKelapa: ${riwayatData}`;
+}
+
+function hapusStock(){
+  if(confirm("Hapus stock saja?")) {
+    stock=0;
+    localStorage.setItem('stockKelapa', stock);
+    updateStock();
+    alert("Stock berhasil dihapus!");
+  }
+}
+
+function hapusRiwayat(){
+  if(confirm("Hapus riwayat saja?")) {
+    riwayat=[];
+    localStorage.setItem('riwayatKelapa', JSON.stringify(riwayat));
+    updateStock();
+    alert("Riwayat berhasil dihapus!");
+  }
+}
+
+function hapusSemua(){
+  if(confirm("Hapus semua data?")) {
+    stock=0;
+    riwayat=[];
+    localStorage.removeItem('stockKelapa');
+    localStorage.removeItem('riwayatKelapa');
+    updateStock();
+    alert("Semua data berhasil dihapus!");
+  }
 }
 
 // ===== Init Dashboard =====
